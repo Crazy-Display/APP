@@ -25,7 +25,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="112dp"
         android:ems="10"
-        android:hint="Mensage"
+        android:hint="Message"
         android:inputType="text"
         app:layout_constraintBottom_toTopOf="@+id/enviar"
         app:layout_constraintEnd_toEndOf="parent"
@@ -37,7 +37,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="112dp"
-        android:text="Conectar"
+        android:text="Connect"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/enviar"
         app:layout_constraintHorizontal_bias="0.445"
@@ -51,7 +51,7 @@
         android:layout_height="50dp"
         android:layout_marginEnd="40dp"
         android:layout_marginBottom="260dp"
-        android:text="Enviar"
+        android:text="Send"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
@@ -70,10 +70,24 @@
         android:id="@+id/mesages"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Mensages"
+        android:text="Message"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/missatge"
         app:layout_constraintVertical_bias="0.603" />
+
+    <Button
+        android:id="@+id/img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="44dp"
+        android:text="Image"
+        app:layout_constraintBottom_toTopOf="@+id/enviar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.659"
+        app:layout_constraintStart_toEndOf="@+id/textView"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
