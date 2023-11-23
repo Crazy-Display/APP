@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import org.java_websocket.client.WebSocketClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -23,6 +24,7 @@ public class LlistaActivity extends AppCompatActivity {
     private ListView myListview;
     static ArrayList<String> mis = new ArrayList<String>();
     private ArrayAdapter<String> adapter;
+    WebSocketClient client = MyWebSocketClient.getInstance().getWebSocketClient();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,6 +32,8 @@ public class LlistaActivity extends AppCompatActivity {
         myListview=findViewById(R.id.list_img);
         adapter= new ArrayAdapter<>(this,android.R.layout.simple_list_item_1,mis);
         myListview.setAdapter(adapter);
+
+
         myListview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -43,15 +47,16 @@ public class LlistaActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         JSONObject message = new JSONObject();
                         try {
-                            message.put("type", "app");
+                            message.put("type", "texto");
                             message.put("texto", value);
                         } catch (JSONException e) {
                             throw new RuntimeException(e);
                         }
                         Log.i("INFO", "Mensaje enviado: " + message);
-
-
-                        //MainActivity.webSocketClient.send(message.toString()); //envia al servidor el mensaje seleccionado
+                        if (client != null && client.isOpen()) {
+                            Log.i("INFO", "Mensaje enviado: " + "Conectado");
+                        MyWebSocketClient.getInstance().getWebSocketClient().send(message.toString()); //envia al servidor el mensaje seleccionado
+                            }
                         Toast.makeText(LlistaActivity.this, value, Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -68,8 +73,6 @@ public class LlistaActivity extends AppCompatActivity {
 
         final Button ran = findViewById(R.id.retorn);
         ran.setOnClickListener(new View.OnClickListener(){
-
-
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(LlistaActivity.this,MainActivity.class);

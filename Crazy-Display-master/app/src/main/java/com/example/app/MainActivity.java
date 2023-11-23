@@ -1,16 +1,20 @@
 package com.example.app;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.InputType;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -19,7 +23,10 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 
+
 import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.drafts.Draft;
+import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.handshake.ServerHandshake;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,62 +41,85 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 
+
 public class MainActivity extends AppCompatActivity {
     private boolean conectado;
+    private Bundle outState;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private static final int CONNECTION_TIMEOUT = 10000; // 5 segundos
-    public static WebSocketClient webSocketClient;
+    private WebSocketClient client;
+    MyWebSocketClient webSocket = MyWebSocketClient.getInstance();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        final Button clients = findViewById(R.id.cli);//clients
         final Button ran = findViewById(R.id.mesages);//mensages
         final Button im = findViewById(R.id.img);//image
+
+
         EditText campoTexto = (EditText) findViewById(R.id.missatge);
         EditText ip = (EditText) findViewById(R.id.ip);
-        if (!conectado){
-        ran.setEnabled(false);//solo si esta conectado
-        }
 
+        if (!conectado){
+            ran.setEnabled(false);//solo si esta conectado
+            toolbar.setVisibility(View.INVISIBLE);
+            clients.setEnabled(false);
+            clients.setVisibility(View.INVISIBLE);
+            im.setEnabled(false);
+        }
         im.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
                 Intent intent = new Intent(MainActivity.this, ImageActivity.class);
                 startActivity(intent);
-
             }
         });
-
-        final Button en = findViewById(R.id.enviar);
-
+            final Button en = findViewById(R.id.enviar);
             final Button conn = findViewById(R.id.conectar);//conectar
             conn.setBackgroundColor(Color.GREEN);
             conn.setOnClickListener(new View.OnClickListener() {
+
                 @Override
                 public void onClick(View view) {
                     String ur="ws://"+ ip.getText().toString()+":8888";
                     Log.i("INFO", ur);
+
                     if (!conectado){
                     try {
                         URI uri = new URI(ur);
-                         webSocketClient = new WebSocketClient(uri) {
+                         client = new WebSocketClient(uri, (Draft) new Draft_6455()) {
                             @Override
                             public void onOpen(ServerHandshake handshakedata) {
-
+                                client.send("app");
                                 handler.post(new Runnable() {
                                     @Override
                                     public void run() {
-                                        conn.setText("Disconect");
-                                        conn.setBackgroundColor(Color.RED);
-                                        conectado=true;
-                                        ran.setEnabled(true);
+                                ran.setEnabled(true);//solo si esta conectado
+                                toolbar.setVisibility(View.VISIBLE);
+                                clients.setEnabled(true);
+                                clients.setVisibility(View.VISIBLE);
+                                im.setEnabled(true);
                                     }
                                 });
-                                webSocketClient.send("app");
                             }
                             @Override
                             public void onMessage(String message) {
-                                Log.i("INFO", "Received message: " + message);
+                                if (message.equals("Connected")){
+                                    handler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            conn.setText("Disconect");
+                                            conn.setBackgroundColor(Color.RED);
+                                            conectado=true;
+                                            ran.setEnabled(true);
+                                        }
+                                    });
+                                }
                             }
                             @Override
                             public void onClose(int code, String reason, boolean remote) {
@@ -109,7 +139,8 @@ public class MainActivity extends AppCompatActivity {
                                 Log.e("ERROR", "WebSocket connection error: ", ex);
                             }
                         };
-                        webSocketClient.connect();
+                        client.connect();
+
                         if (true){
                             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                             builder.setTitle("Iniciar sesión");
@@ -127,7 +158,6 @@ public class MainActivity extends AppCompatActivity {
                             passwordEditText.setHint("Contraseña");
                             passwordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
                             layout.addView(passwordEditText);
-
                             builder.setView(layout);
 
                             // Añadir los botones de aceptar y cancelar
@@ -140,16 +170,16 @@ public class MainActivity extends AppCompatActivity {
 
                                     JSONObject message = new JSONObject();
                                     try {
+                                        message.put("type", "verification");
                                         message.put("username", username);
                                         message.put("password", password);
-                                        // MainActivity.webSocketClient.send(message.toString());
+                                        Log.i("INFO", "Connection closed: " +message.toString());
+
+
                                     } catch (JSONException e) {
                                         throw new RuntimeException(e);
                                     }
 
-
-                                    // Realizar la acción correspondiente
-                                    // ...
                                 }
                             });
                             builder.setNegativeButton("Cancelar", null);
@@ -161,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
                         throw new RuntimeException(e);
                     }
                 }else{
-                        webSocketClient.close();
+
                         conn.setText("Connect");
                         conn.setBackgroundColor(Color.GREEN);
                     }
@@ -200,13 +230,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                     //enviar el mensage al servidor
                     String mensaje = campoTexto.getText().toString();
-                    if (webSocketClient != null && webSocketClient.isOpen()) {
+                    if (client != null && client.isOpen()) {
                         try {
                             JSONObject message = new JSONObject();
-                                message.put("type", "app");
+                                message.put("type", "texto");
                                 message.put("texto", mensaje);
 
-                            //MainActivity.webSocketClient.send(message.toString());
+                            client.send(message.toString());
                             Log.i("INFO", "Mensaje enviado: " + mensaje);
                         } catch (Exception e) {
                             Log.e("ERROR", "Error al enviar el mensaje: ", e);
@@ -285,7 +315,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
-
     }
+
 }

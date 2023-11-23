@@ -47,7 +47,6 @@ public class ImageActivity extends AppCompatActivity {
                     convertView = getLayoutInflater().inflate(R.layout.list_item_view, container, false);
                 }
 
-
                 ImageView imageView = convertView.findViewById(R.id.imageView);
                 int imageResource = fotos.get(pos);
                 Bitmap bitmap = BitmapFactory.decodeResource(getResources(), imageResource);
@@ -59,14 +58,12 @@ public class ImageActivity extends AppCompatActivity {
 
                 imageView.setImageBitmap(resizedBitmap);
 
-                // Set the image name
                 TextView textView = convertView.findViewById(R.id.nom);
                 textView.setText(getResources().getResourceEntryName(imageResource).toUpperCase());
                 // Afegim un click listener a la imatge
                 imageView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
 
                         Bitmap bitmap = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
 
@@ -75,21 +72,16 @@ public class ImageActivity extends AppCompatActivity {
                         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
                         byte[] bytes = byteArrayOutputStream.toByteArray();
                         String base64Image = Base64.encodeToString(bytes, Base64.DEFAULT);
+
                         Intent intent = new Intent(ImageActivity.this, FullImageActivity.class);
                         intent.putExtra("image", base64Image);
                         intent.putExtra("name", getResources().getResourceEntryName(imageResource));
                         startActivity(intent);
-
-
-
-
-
                     }
                 });
 
                 return convertView;
             }
-
         };
 
         // busquem la ListView i li endollem el ArrayAdapter
