@@ -29,6 +29,9 @@ public class LlistaActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_llista2);
+
+
+
         myListview=findViewById(R.id.list_img);
         adapter= new ArrayAdapter<>(this,android.R.layout.simple_list_item_1,mis);
         myListview.setAdapter(adapter);
@@ -52,10 +55,11 @@ public class LlistaActivity extends AppCompatActivity {
                         } catch (JSONException e) {
                             throw new RuntimeException(e);
                         }
-                        Log.i("INFO", "Mensaje enviado: " + message);
-                        if (client != null && client.isOpen()) {
-                            Log.i("INFO", "Mensaje enviado: " + "Conectado");
-                        MyWebSocketClient.getInstance().getWebSocketClient().send(message.toString()); //envia al servidor el mensaje seleccionado
+
+                        //envia al servidor el mensaje seleccionado
+                        if (client != null && client.getConnection().isOpen()) {
+                            Log.i("INFO", "Mensaje enviado: " + client.isOpen());
+                            client.send(message.toString());
                             }
                         Toast.makeText(LlistaActivity.this, value, Toast.LENGTH_SHORT).show();
                     }
@@ -81,4 +85,5 @@ public class LlistaActivity extends AppCompatActivity {
             }
         });
     }
+
 }

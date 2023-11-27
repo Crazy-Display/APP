@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -18,10 +19,14 @@ import org.json.JSONObject;
 
 public class FullImageActivity extends AppCompatActivity {
     WebSocketClient client = MyWebSocketClient.getInstance().getWebSocketClient();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_full_image);
+
+        client.onMessage("connexion");
+
         final Button im = findViewById(R.id.button);
         final Button se = findViewById(R.id.send);
         // Obtener los datos de la imagen de la intención
@@ -48,7 +53,7 @@ public class FullImageActivity extends AppCompatActivity {
 
                     if (client != null && client.isOpen()) {
 
-                        client.send(message.toString()); //envia al servidor el mensaje seleccionado
+                        client.send(String.valueOf(message));
 
                     }
                 } catch (JSONException e) {
@@ -56,7 +61,6 @@ public class FullImageActivity extends AppCompatActivity {
                 }
             }
         });
-
         im.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

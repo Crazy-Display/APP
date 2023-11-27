@@ -7,7 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
-import android.util.Base64;
+
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +22,7 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.Base64;
 
 public class ImageActivity extends AppCompatActivity {
     ArrayAdapter<Integer> adapter;
@@ -71,7 +72,8 @@ public class ImageActivity extends AppCompatActivity {
                         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
                         byte[] bytes = byteArrayOutputStream.toByteArray();
-                        String base64Image = Base64.encodeToString(bytes, Base64.DEFAULT);
+
+                        String base64Image = Base64.getEncoder().encodeToString(bytes);
 
                         Intent intent = new Intent(ImageActivity.this, FullImageActivity.class);
                         intent.putExtra("image", base64Image);
