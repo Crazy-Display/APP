@@ -79,6 +79,7 @@ public class LlistaActivity extends AppCompatActivity {
         ran.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {
+                client.close();
                 Intent intent = new Intent(LlistaActivity.this,MainActivity.class);
                 startActivity(intent);
 

@@ -4,6 +4,7 @@ import org.java_websocket.client.WebSocketClient;
 public class MyWebSocketClient {
     private static MyWebSocketClient instance;
     private WebSocketClient webSocketClient;
+    private boolean isConnected = false;
 
     private MyWebSocketClient() {
     }
@@ -14,7 +15,12 @@ public class MyWebSocketClient {
         }
         return instance;
     }
-
+    public boolean isConnected() {
+        return isConnected;
+    }
+    public void setConnected(boolean connected) {
+        isConnected = connected;
+    }
     public WebSocketClient getWebSocketClient() {
         return webSocketClient;
     }

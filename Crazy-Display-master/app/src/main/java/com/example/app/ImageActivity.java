@@ -17,6 +17,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import org.java_websocket.client.WebSocketClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -26,6 +27,7 @@ import java.util.Base64;
 
 public class ImageActivity extends AppCompatActivity {
     ArrayAdapter<Integer> adapter;
+    WebSocketClient client = MyWebSocketClient.getInstance().getWebSocketClient();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -92,6 +94,7 @@ public class ImageActivity extends AppCompatActivity {
         im.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
                 Intent intent = new Intent(ImageActivity.this, MainActivity.class);
                 startActivity(intent);
 

@@ -55,20 +55,27 @@ public class MainActivity extends AppCompatActivity {
     private boolean conectado;
     private Bundle outState;
 
-    private ArrayAdapter<String> adapter;
+
     private final Handler handler = new Handler(Looper.getMainLooper());
     private static final int CONNECTION_TIMEOUT = 10000;
     private WebSocketClient client;
-    MyWebSocketClient webSocket = MyWebSocketClient.getInstance();
-    @SuppressLint("MissingInflatedId")
+    private ListView userListView;
+    private ArrayAdapter<String> userAdapter;
+    WebSocketClient cl = MyWebSocketClient.getInstance().getWebSocketClient();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if (MyWebSocketClient.getInstance().isConnected()) {
+
+            handleWebSocketConnection(true);
+        }
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        ArrayList<String> users = new ArrayList<>();
-
+        //final ListView userListView = findViewById(R.id.userListView);
+        userAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>());
+        //userListView.setAdapter(userAdapter);
 
         final Button clients = findViewById(R.id.cli);//clients
         final Button ran = findViewById(R.id.mesages);//mensages
@@ -78,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
         EditText campoTexto = (EditText) findViewById(R.id.missatge);
         EditText ip = (EditText) findViewById(R.id.ip);
 
-        if (!conectado){
+        if (!MyWebSocketClient.getInstance().isConnected() ){
             ran.setEnabled(false);//solo si esta conectado
             toolbar.setVisibility(View.INVISIBLE);
             clients.setEnabled(false);
@@ -102,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
                     String ur="ws://"+ ip.getText().toString()+":8888";
                     Log.i("INFO", ur);
 
-                    if (!webSocket.getWebSocketClient().isOpen()){
+                    if (!conectado){
                     try {
                         URI uri = new URI(ur);
                          client = new WebSocketClient(uri, (Draft) new Draft_6455()) {
@@ -112,6 +119,7 @@ public class MainActivity extends AppCompatActivity {
                                 handler.post(new Runnable() {
                                     @Override
                                     public void run() {
+                                        MyWebSocketClient.getInstance().setWebSocketClient(client);
                                 ran.setEnabled(true);//solo si esta conectado
                                 toolbar.setVisibility(View.VISIBLE);
                                 clients.setEnabled(true);
@@ -134,35 +142,77 @@ public class MainActivity extends AppCompatActivity {
                                         }
                                     });
                                 }
+                                if (message.equals("OK")){
+                                    handler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast.makeText(MainActivity.this, "Connect", Toast.LENGTH_SHORT).show();
 
-                                if (message.equals("Connected")){
-                                    Toast.makeText(MainActivity.this, "Connexion", Toast.LENGTH_SHORT).show();
-                                };
-                                if (message.equals("Mensaje")){
-                                    Toast.makeText(MainActivity.this, "Connexion", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                }
+                                if (message.equals("NOTOK")){
+                                    handler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast.makeText(MainActivity.this, "NOT Connect", Toast.LENGTH_SHORT).show();
 
-                                };
-
+                                        }
+                                    });
+                                }
                                 try {
                                     JSONObject obj_json = new JSONObject(message);
-                                    if (obj_json.getString("type").equals("users")){
+                                    if (obj_json.getString("type").equals("connected")){
 
-                                        JSONArray arrayListflu = obj_json.getJSONArray("usersFlutter");
-                                        JSONArray arrayListapp = obj_json.getJSONArray("usersApp");
-                                        for (int i = 0; i < arrayListflu.length(); i++) {
-                                            users.add(arrayListflu.get(i).toString());
-                                        }
-                                        for (int i = 0; i < arrayListapp.length(); i++) {
-                                            users.add(arrayListapp.get(i).toString());
-                                        }
+                                        handler.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                try {
+                                                    Toast.makeText(MainActivity.this, obj_json.getString("name")+" Connect", Toast.LENGTH_SHORT).show();
+                                                } catch (JSONException e) {
+                                                    throw new RuntimeException(e);
+                                                }
+                                            }
+                                        });
                                     }
-
+                                    if (obj_json.getString("type").equals("disconnected")){
+                                        handler.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                try {
+                                                    Toast.makeText(MainActivity.this, obj_json.getString("name")+" Disconnect", Toast.LENGTH_SHORT).show();
+                                                } catch (JSONException e) {
+                                                    throw new RuntimeException(e);
+                                                }
+                                            }
+                                        });}
+                                    if (obj_json.getString("type").equals("message")){
+                                        handler.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                try {
+                                                    Toast.makeText(MainActivity.this, obj_json.getString("user")+" send Messaje", Toast.LENGTH_SHORT).show();
+                                                } catch (JSONException e) {
+                                                    throw new RuntimeException(e);
+                                                }
+                                            }
+                                        });                                    }
 
                                 } catch (JSONException e) {
-                                    throw new RuntimeException(e);
+                                    throw new RuntimeException(e);}
+                                try {
+                                    JSONObject obj_json = new JSONObject(message);
+                                    if (obj_json.getString("type").equals("users")) {
+                                        JSONArray userListFlutter = obj_json.getJSONArray("usersFlutter");
+                                        JSONArray userListApp = obj_json.getJSONArray("usersApp");
+
+                                        // Actualizar la UI con las listas de usuarios
+                                        updateUIWithUserLists(userListFlutter, userListApp);
+                                    }
+
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
                                 }
-
-
                             }
                             @Override
                             public void onClose(int code, String reason, boolean remote) {
@@ -187,10 +237,13 @@ public class MainActivity extends AppCompatActivity {
                                 Log.e("ERROR", "WebSocket connection error: ", ex);
                             }
                         };
-                         MyWebSocketClient.getInstance().setWebSocketClient(client);
-                        client.connect();
 
-                        if (true){
+                         MyWebSocketClient.getInstance().setWebSocketClient(client);
+
+                        client.connect();
+                        conectado=true;
+
+                        if (!client.isOpen()){
                             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                             builder.setTitle("Iniciar sesión");
                             builder.setMessage("Introduzca su nombre de usuario y contraseña");
@@ -209,7 +262,6 @@ public class MainActivity extends AppCompatActivity {
                             layout.addView(passwordEditText);
                             builder.setView(layout);
 
-                            // Añadir los botones de aceptar y cancelar
                             builder.setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
@@ -244,38 +296,31 @@ public class MainActivity extends AppCompatActivity {
                         throw new RuntimeException(e);
                     }
                 }else{
-
+                        client.close();
                         conn.setText("Connect");
                         conn.setBackgroundColor(Color.GREEN);
                     }
                 }
             });
 
-        String[] array = new String[users.size()];
-        users.toArray(array);
+
         clients.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                JSONObject requestedUsers = new JSONObject();
-
-                try {
-                    requestedUsers.put("type", "users");
-                    client.send(String.valueOf(requestedUsers));
-                } catch (JSONException e) {
-                    throw new RuntimeException(e);
-                }
-
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                builder.setTitle("CLIENTES");
-
-                builder.setItems(array, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
+                if (client.isOpen()) {
+                    // Enviar solicitud de usuarios al servidor
+                    JSONObject requestedUsers = new JSONObject();
+                    try {
+                        requestedUsers.put("type", "users");
+                        client.send(requestedUsers.toString());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
-                });
-                builder.show();
+                } else {
+                    // La conexión no está abierta, muestra un mensaje de error o reconecta
+                    // Puedes mostrar un Toast, un diálogo, o realizar otra acción según tus necesidades
+                    Toast.makeText(MainActivity.this, "La conexión no está abierta", Toast.LENGTH_SHORT).show();
+                }
            }
         });
 
@@ -388,13 +433,42 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 Intent intent = new Intent(MainActivity.this, LlistaActivity.class);
-
                 startActivity(intent);
 
             }
         });
 
     }
+    private void updateUIWithUserLists(JSONArray userListFlutter, JSONArray userListApp) throws JSONException {
+        // Combinar las listas de usuarios si es necesario
+        ArrayList<String> combinedUserList = new ArrayList<>();
+        for (int i = 0; i < userListFlutter.length(); i++) {
+            combinedUserList.add(userListFlutter.getString(i));
+        }
+        for (int i = 0; i < userListApp.length(); i++) {
+            combinedUserList.add(userListApp.getString(i));
+        }
+        String[] array = new String[combinedUserList.size()];
+        combinedUserList.toArray(array);
 
+        // Limpiar el adaptador y agregar los nuevos elementos
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle("CLIENTES");
+
+        builder.setItems(array, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+        builder.show();
+
+
+    }
+    private void handleWebSocketConnection(boolean isConnected) {
+        MyWebSocketClient.getInstance().setConnected(isConnected);
+
+    }
 
 }

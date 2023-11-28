@@ -25,8 +25,6 @@ public class FullImageActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_full_image);
 
-        client.onMessage("connexion");
-
         final Button im = findViewById(R.id.button);
         final Button se = findViewById(R.id.send);
         // Obtener los datos de la imagen de la intención
@@ -64,6 +62,7 @@ public class FullImageActivity extends AppCompatActivity {
         im.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                client.close();
                 Intent intent = new Intent(FullImageActivity.this, ImageActivity.class);
                 startActivity(intent);
 
